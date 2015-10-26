@@ -1,0 +1,5 @@
+# Export all names
+exportPattern(".")
+import(data.table)
+import(plyr)
+import(GeoDE)
