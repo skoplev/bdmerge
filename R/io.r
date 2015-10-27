@@ -27,7 +27,6 @@ writeData = function(d, target_dir=".", file_format="hdf5") {
 	# Check if directory exists
 	dir.create(target_dir)  # prints warning if directory already exists
 
-
 	if (file_format == "hdf5") {
 		if (file.exists(paste0(target_dir, "/data.h5"))) {
 			# remove previous file
@@ -115,11 +114,6 @@ writeCorData = function(d, target_dir=".") {
 	require(RJSONIO)
 	require(random)
 	checkCorList(d)
-
-	# write.table(mat, file=paste0(target_dir, "/", name, ".tsv"), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
-	# # Write metadata
-	# write.table(meta_row, file=paste0(target_dir, "/meta_row.tsv"), quote=FALSE, row.names=FALSE, sep="\t")
-	# write.table(meta_col, file=paste0(target_dir, "/meta_col.tsv"), quote=FALSE, row.names=FALSE, sep="\t")
 
 	# Create random folder name for the data files
 	folder_name = randomStrings(1, len=20)[1, 1]

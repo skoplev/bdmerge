@@ -34,7 +34,6 @@ checkDataList = function(d) {
 		}
 
 		# Test dimensions of data matrix
-
 		if (nrow(d[[entry]]) != nrow(d$meta_row)) {
 			stop("ERROR: Invalid data type, dimension mismatch between meta_row and ", entry)
 		}
@@ -91,8 +90,6 @@ colSubset = function(d, samples) {
 	return(out)
 }
 
-# colReorder = 
-
 # d is a dlist, exp_def a vector defining experimental id
 colUnique = function(d, exp_def) {
 	experiments = apply(d$meta_col[exp_def], 1, paste, collapse=":")
@@ -100,10 +97,6 @@ colUnique = function(d, exp_def) {
 	unique_samples = match(unique(experiments), experiments)  # first match only
 
 	# Remove all sample definitions with missing values
-	# valid = lapply(strsplit(unique_samples, ":"), function(row) {return(all(row != "NA"))})
-
-	# unique_samples = unique_sample
-
 	return(colSubset(d, unique_samples))
 }
 

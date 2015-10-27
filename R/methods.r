@@ -288,7 +288,6 @@ chardirExpCtrl = function(d, ctrl_code) {
 
 		dchar = cbind(dchar, as.data.frame(control_data), as.data.frame(sample_data))
 
-
 		# Truncate missing data (rows)
 		complete_rows = apply(!is.na(dchar), 1, all)
 		dchar = dchar[complete_rows,]
@@ -352,14 +351,6 @@ corMerge = function(
 	if (!is.null(transformB)) {
 		dB = transformB(dB)
 	}
-
-	# if (!is.null(col_selector_field)) {
-	# 	sep_values = unique(c(dA$meta_col[[col_selector_field]], dB$meta_col[[col_selector_field]]))
-
-	# 	for (i in 1:length(sep_values)) {
-
-	# 	}
-	# }
 
 	if (match_method == "average") {
 		# Apply mean to data list
