@@ -316,7 +316,7 @@ mergeDataLists = function(dlist1, dlist2) {
 #			"matched_matrix": matrices are returned with corresponding indices
 # mergeDataListsByCol = function(dlist1, dlist2, match_condition, 
 mergeDataListsByCol = function(dlists, 
-	match_condition, 
+	match_conditions,  # list of vectors generating
 	bootstrap=FALSE)
 {
 	require(plyr)
@@ -327,24 +327,33 @@ mergeDataListsByCol = function(dlists,
 	# dlists = list(p100_ttest, l1000_ttest_6h, l1000_ttest_24h)
 	# bootstrap = TRUE
 
-	# image(dlists[[1]]$mean_diff)
+	if (length(match_conditions) == 1 & length(dlists) > 1) {
+		# repeat match_conditions
+		match_conditions = rep(list(match_conditions), length(dlists))
+	}
+
+	if (!length(match_conditions) == length(dlists)) {
+		stop("Data lists and match_conditions do not agree")
+	}
 
 	# Check and format
 	for (j in 1:length(dlists)) {
 		checkDataList(dlists[[j]])
 
 		# Test if provided row_id is valid
-		if (!all(match_condition %in% colnames(dlists[[j]]$meta_col))) {
-			stop("invalid col id not found in meta_col: ", match_condition)
+		if (!all(match_conditions[[j]] %in% colnames(dlists[[j]]$meta_col))) {
+			stop("invalid col id not found in meta_col: ", match_conditions[[j]])
 		}
 
 		dlists[[j]]$meta_col = as.data.frame(dlists[[j]]$meta_col)
 		dlists[[j]]$meta_row = as.data.frame(dlists[[j]]$meta_row)
 
 		# Check match condition and ensure consistent string format
-		for (k in 1:length(match_condition)) {
-			if (class(dlists[[j]]$meta_col[[match_condition[k]]]) == "integer" | class(dlists[[j]]$meta_col[[match_condition[k]]]) == "numeric") {
-				dlists[[j]]$meta_col[[match_condition[k]]] = format(as.numeric(dlists[[j]]$meta_col[[match_condition[k]]]), nsmall=1, trim=TRUE)
+		for (k in 1:length(match_conditions[[j]])) {
+			if (class(dlists[[j]]$meta_col[[match_conditions[[j]][[k]]]]) == "integer" | 
+				class(dlists[[j]]$meta_col[[match_conditions[[j]][[k]]]]) == "numeric")
+			{
+				dlists[[j]]$meta_col[[match_conditions[[j]][k]]] = format(as.numeric(dlists[[j]]$meta_col[[match_conditions[[j]][k]]]), nsmall=1, trim=TRUE)
 			}
 		}
 	}
@@ -358,7 +367,7 @@ mergeDataListsByCol = function(dlists,
 	# Construct group ids
 	sampleids = list()
 	for (j in 1:length(dlists)) {
-		sampleids[[j]] = apply(dlists[[j]]$meta_col[match_condition], 1, paste, collapse=":")
+		sampleids[[j]] = apply(dlists[[j]]$meta_col[unlist(match_conditions[[j]])], 1, paste, collapse=":")
 		sampleids[[j]] = gsub(" ", "", sampleids[[j]])  # remove any whitespace
 	}
 

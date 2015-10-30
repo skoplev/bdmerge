@@ -71,13 +71,13 @@ writeData = function(d, target_dir=".", file_format="hdf5") {
 # if name is a vector multiple files are loaded
 # Reads data from specified folder.
 # names=NULL loads all entries
-readData = function(dir=".", names=NULL, file_format="hdf5") {
+readData = function(dir=".", file_path="data.h5", names=NULL, file_format="hdf5") {
 	require(rhdf5)
 	# options(stringsAsFactors=FALSE)  # WARNING: forces global options to change...
 	d = list()
 
 	if (file_format == "hdf5") {
-		d = h5read(paste0(dir, "/data.h5"), "/")
+		d = h5read(paste0(dir, "/", file_path), "/")
 		H5close()
 	} else if (file_format == "txt") {
 		# Load metadata
