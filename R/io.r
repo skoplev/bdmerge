@@ -21,18 +21,20 @@ writeDataCore = function(mat, meta_col, meta_row, target_dir, name="data") {
 }
 
 # Wrapper function for writeDataCore where input is dataframe with $x, $meta_col, and $meta_row
-writeData = function(d, target_dir=".", file_format="hdf5") {
+# name is the file base name
+writeData = function(d, target_dir=".", file_format="hdf5", base_name="data") {
 	require(rhdf5)
 
 	# Check if directory exists
 	dir.create(target_dir)  # prints warning if directory already exists
 
 	if (file_format == "hdf5") {
-		if (file.exists(paste0(target_dir, "/data.h5"))) {
+		file_path = paste0(target_dir, "/", base_name, ".h5")
+		if (file.exists(file_path)) {
 			# remove previous file
-			unlink(paste0(target_dir, "/data.h5"))
+			unlink(file_path)
 		}
-		h5createFile(paste0(target_dir, "/data.h5"))
+		h5createFile(file_path)
 
 		 # else overwrite existing file
 		for (entry in names(d)) {
@@ -45,7 +47,7 @@ writeData = function(d, target_dir=".", file_format="hdf5") {
 					stringsAsFactors=FALSE)
 			}
 			# write data to HDF5 file
-			h5write(d[[entry]], paste0(target_dir, "/data.h5"), entry)
+			h5write(d[[entry]], file_path, entry)
 			H5close()
 		}
 	} else if (file_format == "txt") {
