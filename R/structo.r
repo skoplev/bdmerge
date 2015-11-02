@@ -212,13 +212,27 @@ missingValuesCol = function(dlists, entry) {
 	return(missing)
 }
 
-allMissingValuesCol = function(dlists, entry) {
-	missing = lapply(dlists, function(dlist) {
-		col_missing = apply(dlist[[entry]], 2, function(col) {
+# entry is a vector of matrix names in dlists. If single entry name is provided
+# the same name is assumed for all.
+allMissingValuesCol = function(dlists, entries) {
+
+	if (length(entries) == 1) {
+		entries = rep(entries, length(dlists))  # expand to match length of list
+	}
+
+	# make references to matrix
+	matrices = list()
+	for (i in 1:length(dlists)) {
+		matrices[[i]] = dlists[[i]][[entries[i]]]
+	}
+
+	missing = lapply(matrices, function(mat) {
+		col_missing = apply(mat, 2, function(col) {
 			return(all(is.na(col)))
 		})
 		return(col_missing)
 	})
+
 	return(missing)
 }
 
