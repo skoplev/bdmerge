@@ -212,6 +212,7 @@ missingValuesCol = function(dlists, entry) {
 	return(missing)
 }
 
+# Calculate if all entries of a dlist list colum are NAs.
 # entry is a vector of matrix names in dlists. If single entry name is provided
 # the same name is assumed for all.
 allMissingValuesCol = function(dlists, entries) {
@@ -330,7 +331,7 @@ mergeDataLists = function(dlist1, dlist2) {
 # 	c("cyclical", "bootstrap", "average")
 #  	cyclical: cyclical randomly selects
 # 	bootstrap: samples with replacement from multiple members of group
-#	average: condenses multiples to their average
+#	average: condenses multiples to their average. Not yet implemented.
 
 # Uses cyclical sampling without replacement to fill in the lesser data type for each condition.
 # First, matching index vectors are calculated, which are used to slice the two input data lists.
@@ -489,10 +490,7 @@ mergeDataListsByCol = function(dlists,
 		if (!is.null(matrix_selections)) {
 			# only return selected matrix
 			for (entry in matrix_selections[j]) {
-				out[[j]][[entry]] = dlists[[j]][[entry]][,
-					# select non NA columns 
-					col_index_mat[,j][!is.na(col_index_mat[,j])]
-				]
+				out[[j]][[entry]] = dlists[[j]][[entry]][,col_index_mat[,j]]
 			}
 			
 		} else {
