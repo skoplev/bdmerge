@@ -321,29 +321,37 @@ mergeDataLists = function(dlist1, dlist2) {
 	return(out)
 }
 
-# Merges data types with matching column condition (such as experimental id). 
+# Merges data types with matching column condition (such as experimental id).
+
+# ARGUMENTS:
+# match_conditions:  list of vector of the meta data sample column names to use for the experimental matching id.
+# matrix_selection:  list of vectors of strings, names of matrices to use. if null, all entries are used
+# mehod: methods for handling multiple entries with the same experimental id
+# 	c("cyclical", "bootstrap", "average")
+#  	cyclical: cyclical randomly selects
+# 	bootstrap: samples with replacement from multiple members of group
+#	average: condenses multiples to their average
+
 # Uses cyclical sampling without replacement to fill in the lesser data type for each condition.
 # First, matching index vectors are calculated, which are used to slice the two input data lists.
-# Only column metadata is combined using cbind. THerefore, column names migth be replicated.
-# max_repat: maximum number of allowed repetitions in data matchings.
-# output: "rjoin_matrix": matrices are joined by row
-#			"matched_matrix": matrices are returned with corresponding indices
-# mergeDataListsByCol = function(dlist1, dlist2, match_condition, 
+# Only column metadata is combined using cbind. Therefore, column names migth be replicated.
+
 mergeDataListsByCol = function(dlists, 
 	match_conditions,  # list of vectors generating
-	bootstrap=FALSE)
+	matrix_selections=NULL,  # all selected by default
+	method="cyclical")
 {
 	require(plyr)
 
-	# # test enviroment 
-	# match_condition=c("cell_id", "pert_id", "pert_dose")
-	# # dlists = list(p100_ttest, l1000_ttest)
-	# dlists = list(p100_ttest, l1000_ttest_6h, l1000_ttest_24h)
-	# bootstrap = TRUE
-
+	# CHECK INPUT
+	# -------------------------------------------------
 	if (length(match_conditions) == 1 & length(dlists) > 1) {
 		# repeat match_conditions
 		match_conditions = rep(list(match_conditions), length(dlists))
+	}
+
+	if (length(matrix_selections) == 1 & length(dlists) > 1) {
+		matrix_selections = rep(list(matrix_selections), length(dlists))
 	}
 
 	if (!length(match_conditions) == length(dlists)) {
@@ -372,27 +380,24 @@ mergeDataListsByCol = function(dlists,
 		}
 	}
 
-	for (j in 2:length(dlists)) {
-		if (!all(names(dlists[[j - 1]]) == names(dlists[[j]]))) {
-			stop("Data lists contain different entries.")
-		}
-	}
-
+	# MATCH DATA
+	# -------------------------------------------------------------------
 	# Construct group ids
 	sampleids = list()
 	for (j in 1:length(dlists)) {
-		sampleids[[j]] = apply(dlists[[j]]$meta_col[unlist(match_conditions[[j]])], 1, paste, collapse=":")
+		# construct ids from multiple fields.
+		sampleids[[j]] = apply(
+			dlists[[j]]$meta_col[unlist(match_conditions[[j]])],
+			1, paste, collapse=":"
+		)
 		sampleids[[j]] = gsub(" ", "", sampleids[[j]])  # remove any whitespace
 	}
+	groups = unique(unlist(sampleids))  # get all groups from constructed sampleids
 
-	# groups = unique(c(sampleid1, sampleid2))
-	groups = unique(unlist(sampleids))
-
-	# Create mathcing local column index accross each of the dlists
+	# Create matching local column index accross each of the dlists
 	col_index = list()
 
 	# Loop over experimental groups
-	# for (i in 13:14) {
 	for (i in 1:length(groups)) {
 
 		# Find the local columns for each data list that matches the experimental group.
@@ -405,15 +410,16 @@ mergeDataListsByCol = function(dlists,
 			}
 		})
 
-		# Shuffle order
+		# Shuffle order such that the cyclical matching is not biased
 		cols = lapply(cols, function(local_index) {
 			return(local_index[sample(1:length(local_index))])
 		})
 
+		# The maximum number of members for the considered experimental group
 		max_members = max(sapply(cols, length))
 
 		# sample with replacement to maximum samples for other data types
-		if (bootstrap) {
+		if (method == "bootstrap") {
 			cols = lapply(cols, function(local_index) {
 				if (length(local_index) == max_members | length(local_index) == 0) {
 					return(local_index)
@@ -427,22 +433,30 @@ mergeDataListsByCol = function(dlists,
 					stop("Invalid local_index")  # internal error
 				}
 			})
-		} else {
+		} else if (method == "cyclical") {
 			# no bootstrap, fill up with NA's
 			cols = lapply(cols, function(local_index) {
 				if (length(local_index) == max_members) {
+					# maximum number of entries
 					return(local_index)
 				} else {
-					return(c(local_index, rep(NA, max_members - length(local_index))))
+					# less than maximum number entries
+					return(c(local_index, rep(NA, max_members - length(local_index))))  # fill up with NAs
 				}
 			})
+		} else if (method == "average") {
+			# TODO
+			stop("method not implemented")
+		} else {
+			stop("wrong method")
 		}
-		col_index[[i]] = do.call(cbind, cols)
+		col_index[[i]] = do.call(cbind, cols)  # create matrix of column indices
 	}
 
 	# Matrix of local (and matched) indicies. One column per dlist
-	col_index_mat = do.call(rbind, 	col_index)
+	col_index_mat = do.call(rbind, col_index)
 
+	# calculate number of entries in each experimental group
 	group_members = sapply(col_index, nrow)
 
 	if (!length(group_members) == length(groups)) {
@@ -453,26 +467,40 @@ mergeDataListsByCol = function(dlists,
 		stop("Internal, match group and col index inconsistent.")
 	}
 
+	# create internal match group id
 	match_group = list()
 	for (k in 1:length(group_members)) {
 		match_group[[k]] = rep(k, nrow(col_index[[k]]))
 	}
 	match_group = unlist(match_group)
 
-	# match_groups = sapply(sapply(col_index, nrow), sqrt)
+	# COPY DATA TO RETURN STRUCTURE
+	# --------------------------------------------------------------
+	# As specified in col_index_mat. Slicing the input data lists using the calculated column indices.
 
-	# Slice the input data lists using the calculated column indices.
 	out = list()
 
 	for (j in 1:length(dlists)) {
 		out[[j]] = list()
-		out[[j]]$meta_col = dlists[[j]]$meta_col[col_index_mat[,j],]
+		out[[j]]$meta_col = dlists[[j]]$meta_col[col_index_mat[,j], , drop=FALSE]
 		out[[j]]$meta_col$match_group = match_group
 		out[[j]]$meta_row = dlists[[j]]$meta_row
 
-		for (entry in names(dlists[[j]])) {
-			if (entry == "meta_row" | entry == "meta_col") next
-			out[[j]][[entry]] = dlists[[j]][[entry]][,col_index_mat[,j]]
+		if (!is.null(matrix_selections)) {
+			# only return selected matrix
+			for (entry in matrix_selections[j]) {
+				out[[j]][[entry]] = dlists[[j]][[entry]][,
+					# select non NA columns 
+					col_index_mat[,j][!is.na(col_index_mat[,j])]
+				]
+			}
+			
+		} else {
+			# assume data lists have the exact same matrix names.
+			for (entry in names(dlists[[j]])) {
+				if (entry == "meta_row" | entry == "meta_col") next
+				out[[j]][[entry]] = dlists[[j]][[entry]][,col_index_mat[,j]]
+			}
 		}
 
 		checkDataList(out[[j]])
