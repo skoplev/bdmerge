@@ -475,6 +475,7 @@ mergeDataListsByCol = function(dlists,
 	}
 	match_group = unlist(match_group)
 
+
 	# COPY DATA TO RETURN STRUCTURE
 	# --------------------------------------------------------------
 	# As specified in col_index_mat. Slicing the input data lists using the calculated column indices.
@@ -490,14 +491,14 @@ mergeDataListsByCol = function(dlists,
 		if (!is.null(matrix_selections)) {
 			# only return selected matrix
 			for (entry in matrix_selections[j]) {
-				out[[j]][[entry]] = dlists[[j]][[entry]][,col_index_mat[,j]]
+				out[[j]][[entry]] = as.matrix(dlists[[j]][[entry]])[,col_index_mat[,j], drop=FALSE]
 			}
-			
 		} else {
 			# assume data lists have the exact same matrix names.
 			for (entry in names(dlists[[j]])) {
 				if (entry == "meta_row" | entry == "meta_col") next
-				out[[j]][[entry]] = dlists[[j]][[entry]][,col_index_mat[,j]]
+				out[[j]][[entry]] = as.matrix(dlists[[j]][[entry]])[,col_index_mat[,j], drop=FALSE]
+				# note that NA slicing (NA indices yields NA elements) only works for matrices
 			}
 		}
 
