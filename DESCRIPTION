@@ -9,5 +9,6 @@ Imports:
 	stringr,
 	data.table,
 	affy,
-	plyr
+	plyr,
+	rhdf5
 	

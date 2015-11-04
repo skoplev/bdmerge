@@ -1,5 +1,7 @@
 # Export all names
 exportPattern(".")
+import(stringr)
 import(data.table)
 import(plyr)
 import(GeoDE)
+import(rhdf5)
