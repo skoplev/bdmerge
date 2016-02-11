@@ -48,27 +48,34 @@ writeData = function(d, target_dir=".", file_format="hdf5", base_name="data") {
 					stringsAsFactors=FALSE)
 			}
 
-			# init HDF5 data entry
-			h5createDataset(
-				file=file_path,  # HDF5 file path
-				dataset=entry,   # table name
-				dims=dim(d[[entry]]),  # table dimensions
-				level=6,  # compression level, 0-9
-				chunk=c(min(nrow(d[[entry]]), col_chunk_size), min(ncol(d[[entry]]), col_chunk_size)),
-			)
+			if (ncol(d[[entry]]) > col_chunk_size) {
+				# write matrix in chunks
 
-			# Calculate slice indices for chunk writing
-			mat_ncol = ncol(d[[entry]])  # number of matrix columns
-			all_index = 1:mat_ncol  # all matrix column indices
-			col_chunks = split(all_index, ceiling(all_index/col_chunk_size))  # index chunks
-
-			# Loop over chunks and write to files
-			for (slice in col_chunks) {
-				h5write(d[[entry]][,slice],
-					file_path,
-					entry,
-					index=list(NULL, slice)
+				# init HDF5 data entry
+				h5createDataset(
+					file=file_path,  # HDF5 file path
+					dataset=entry,   # table name
+					dims=dim(d[[entry]]),  # table dimensions
+					level=6,  # compression level, 0-9
+					chunk=c(nrow(d[[entry]]), col_chunk_size)  # chunk size used for storage
 				)
+
+				# Calculate slice indices for chunk writing
+				mat_ncol = ncol(d[[entry]])  # number of matrix columns
+				all_index = 1:mat_ncol  # all matrix column indices
+				col_chunks = split(all_index, ceiling(all_index/col_chunk_size))  # index chunks
+
+				# Loop over chunks and write to files
+				for (slice in col_chunks) {
+					h5write(d[[entry]][,slice],
+						file_path,
+						entry,
+						index=list(NULL, slice)
+					)
+				}
+			} else {
+				# single chunk
+				h5write(d[[entry]], file_path, entry)
 			}
 		}
 		H5close()
