@@ -15,13 +15,13 @@ makeRandDlist = function(n, m, n_exp_ids) {
 testMergeDataListsByCol = function() {
 
 	# Testing parameters
-	n1 = 5  # number of samples of data set 1
-	m1 = 10  # number of features of data set 2
+	n1 = 3  # number of samples of data set 1
+	m1 = 3  # number of features of data set 2
 
-	n2 = 30
-	m2 = 20
+	n2 = 5
+	m2 = 4
 
-	n_exp_ids = 10  # number of string based experimental ids
+	n_exp_ids = 5  # number of string based experimental ids
 
 	# init two random data lists with matching experimental ids
 	dlists = list()
@@ -49,5 +49,9 @@ testMergeDataListsByCol = function() {
 
 	dcomb[[1]]$data
 	dcomb[[2]]$data
+
+	dcomb[[1]]$data
+	dcomb[[2]]$data
+
 }
 

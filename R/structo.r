@@ -245,6 +245,7 @@ allMissingValuesCol = function(dlists, entries) {
 
 # Merges data lists. Includes common features indicated by the row_id.
 # Column meta data are expanded.
+# WARNING:  function may have issues if the provided ids are not unique...
 mergeDataListsByRow = function(dlist1, dlist2, row_id="id") {
 	require("plyr")  # todo: move dependency to NAMESPACE file
 
@@ -259,6 +260,15 @@ mergeDataListsByRow = function(dlist1, dlist2, row_id="id") {
 	if (!all(row_id %in% colnames(dlist2$meta_row))) {
 		stop("invalid row_id not found in meta_row: ", row_id)
 	}
+
+	if (any(table(dlist1$meta_row[[row_id]]) > 1)) {
+		warning("id not unique for dlist1")
+	}
+
+	if (any(table(dlist2$meta_row[[row_id]]) > 1)) {
+		warning("id not unique for dlist2")
+	}
+
 
 	# Output data lists structure
 	out = list()

@@ -24,6 +24,7 @@ writeDataCore = function(mat, meta_col, meta_row, target_dir, name="data") {
 # name is the file base name
 writeData = function(d, target_dir=".", file_format="hdf5", base_name="data") {
 	require(rhdf5)
+	col_chunk_size = 10000  # chunk size for writing to HDF5 file
 
 	# Check if directory exists
 	dir.create(target_dir)  # prints warning if directory already exists
@@ -46,10 +47,32 @@ writeData = function(d, target_dir=".", file_format="hdf5", base_name="data") {
 					lapply(d[[entry]][,factor_cols, drop=FALSE], as.character),
 					stringsAsFactors=FALSE)
 			}
-			# write data to HDF5 file
-			h5write(d[[entry]], file_path, entry)
-			H5close()
+
+			# init HDF5 data entry
+			h5createDataset(
+				file=file_path,  # HDF5 file path
+				dataset=entry,   # table name
+				dims=dim(d[[entry]]),  # table dimensions
+				level=6,  # compression level, 0-9
+				chunk=c(min(nrow(d[[entry]]), col_chunk_size), min(ncol(d[[entry]]), col_chunk_size)),
+			)
+
+			# Calculate slice indices for chunk writing
+			mat_ncol = ncol(d[[entry]])  # number of matrix columns
+			all_index = 1:mat_ncol  # all matrix column indices
+			col_chunks = split(all_index, ceiling(all_index/col_chunk_size))  # index chunks
+
+			# Loop over chunks and write to files
+			for (slice in col_chunks) {
+				h5write(d[[entry]][,slice],
+					file_path,
+					entry,
+					index=list(NULL, slice)
+				)
+			}
 		}
+		H5close()
+
 	} else if (file_format == "txt") {
 		# Plain text format
 		# Loop over entries in data list

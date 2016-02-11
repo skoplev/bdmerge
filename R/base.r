@@ -127,3 +127,4 @@ regPlot = function(x, y, ...) {
 	# plot(x, y, cex=0.5, col=rgb(0, 0, 0, 0.5), ...)
 	abline(linreg, col="red")
 }
+
