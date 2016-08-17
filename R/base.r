@@ -114,7 +114,6 @@ networkSimilarity = function(cor_list, name, corFun=cor, ...) {
 }
 
 
-
 # Plots
 regPlot = function(x, y, ...) {
 	linreg = lm(y~x)

@@ -167,3 +167,19 @@ writeCorData = function(d, target_dir=".") {
 	invoke = toJSON(d$invoke)
 	write(invoke, paste0(folder_path, "/invoke.json"))
 }
+
+# Invert rows and columns of data list structure.
+invert = function(d) {
+	d_out = list()
+	for (entry in names(d)) {
+		if (entry == "meta_col") {
+			d_out[["meta_row"]] = d[[entry]]
+		} else if (entry == "meta_row") {
+			d_out[["meta_col"]] = d[[entry]]
+		} else {
+			# matrix
+			d_out[[entry]] = t(d[[entry]])
+		}
+	}
+	return(d_out)
+}
